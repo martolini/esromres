@@ -19,7 +19,6 @@ def index_view(request):
   raw_rooms = Room.objects.all().prefetch_related(Prefetch('reservations', queryset=Reservation.objects.for_day(date).order_by('start_time'), to_attr='today'))
   intervals = range(7, 22)
   rooms = []
-  output = []
   for room in raw_rooms:
     room_intervals = {}
     for reservation in room.today:
@@ -30,6 +29,7 @@ def index_view(request):
     booked_hours = [False if x not in keys else room_intervals[x] for x in intervals]
     runner = booked_hours[0]
     hours = 1
+    output = []
     for elem in booked_hours[1:]:
       if elem != runner:
         output.append({'length': hours, 'booked': runner})
@@ -45,5 +45,5 @@ def index_view(request):
 
 
   return render(request, 'romres/index.html', {
-    'rooms': rooms, 'output': output, 'intervals': intervals, 'date': date
+    'rooms': rooms, 'intervals': intervals, 'date': date
   })
