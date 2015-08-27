@@ -1,0 +1,137 @@
+{% extends 'romres/base.html' %}
+{% block include %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.15.35/css/bootstrap-datetimepicker.min.css" />
+{% endblock %}
+
+{% block content %}
+  <div class="container" style="padding-top: 25px">
+    <div class="row">
+      <div class="panel panel-default">
+        <div class="panel-heading clearfix">
+          <h4 class="panel-title pull-left" style="padding-top: 7.5px;">Romreservasjon for {{ date|date:"d M" }}</h4>
+          <div class="btn-group pull-right">
+            <form method="GET" class="form form-inline">
+              <div class="input-group">
+                <input type="text" class='form-control' name='browseday' id='browsepicker' />
+              </div>
+              <button type='submit' class='btn btn-primary'>Velg dato</button>
+            </form>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="row">
+            <div class="col-md-12">
+              <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Romnr</th>
+                    <th>Størrelse</th>
+                    {% for interval in intervals %}
+                      <th>{{ interval }}</th>
+                    {% endfor %}
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for room in rooms %}
+                    <tr>
+                      <td>{{ room.id }}</td>
+                      <td>{{ room.size }}</td>
+                      {% for element in room.intervals %}
+                        {% if element.booked == False %}
+                          <td colspan='{{ element.length }}' class='success' data-toggle="tooltip" data-placement="top" title="Ledig" data-container='body'></td>
+                        {% else %}
+                          <td class='danger' colspan='{{ element.length }}' data-toggle="tooltip" data-placement="top" title="{{ element.booked.email }} - {{ element.booked.purpose }}" data-container='body'></td>
+                        {% endif %}
+                      {% endfor %}
+                    </tr>
+                  {% endfor%}
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <form method='POST' class="form">
+                {% csrf_token %}
+                <div class="form-group">
+                  <label for="">Rom</label>
+                  <select name="room" class="form-control">
+                    {% for room in rooms %}
+                      <option value={{ room.id }}>{{ room.id }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="">Start</label>
+                  <div class="input-group date" id='datetimepicker1'>
+                    <input name="start_time" type="text" class="form-control" />
+                    <span class='input-group-addon'>
+                      <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="">Slutt</label>
+                  <div class="input-group date" id='datetimepicker2'>
+                    <input name="end_time" type="text" class="form-control" />
+                    <span class='input-group-addon'>
+                      <span class="glyphicon glyphicon-calendar"></span>
+                    </span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="">Formål</label>
+                  <input type="text" class='form-control' name='purpose' placeholder='organisere arrangement på es' />
+                </div>
+                <div class="form-group">
+                  <label for="">Fornavn</label>
+                  <input type="text" class='form-control' placeholder='Arne' name='first_name' />
+                </div>
+                <div class="form-group">
+                  <label for="">Etternavn</label>
+                  <input type="text" class='form-control' placeholder='Pettersen' name='last_name' />
+                </div>
+                <div class="form-group">
+                  <label for="">Email</label>
+                  <input type="email" class='form-control' name='email' placeholder='arne@pettersen.no' />
+                </div>
+                <div class="button-group">
+                  <button type='submit' class='btn btn-primary'>Reserver</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/locale/nb.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datetimepicker/4.15.35/js/bootstrap-datetimepicker.min.js'></script>
+  <script>
+    $(function() {
+      var enabledDates = [moment()];
+      for (var i=0; i<7; i++) {
+        enabledDates.push(moment().add(i+1, 'days'));
+      }
+      $('td').tooltip();
+      $('#datetimepicker1').datetimepicker({
+        sideBySide: true,
+        format: 'DD MMMM YYYY HH[:00]',
+        'defaultDate': new moment('{{ date|date:"Y-m-d" }}').add(7, 'hours')
+      });
+      $('#datetimepicker2').datetimepicker({
+        sideBySide: true,
+        format: 'DD MMMM YYYY HH[:00]',
+        'defaultDate': new moment('{{ date|date:"Y-m-d" }}').add(8, 'hours')
+      });
+      $('#browsepicker').datetimepicker({
+        'format': 'DD/MM/YYYY',
+        'enabledDates': enabledDates,
+        'defaultDate': new moment('{{ date|date:"Y-m-d" }}')
+      });
+    });
+  </script>
+{% endblock %}
