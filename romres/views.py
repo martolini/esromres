@@ -1,17 +1,24 @@
+# -*- coding: utf-8 -*-
+
 from django.shortcuts import render
 from .models import Room, Reservation
 from django.db.models import Prefetch
 from django.utils import timezone
 from .forms import ReservationForm
 from datetime import datetime
+from django.contrib import messages
 
 def index_view(request):
+  form = ReservationForm(initial={'email': '', 'first_name': '', 'last_name': '', 'purpose': ''})
   if request.POST:
     form = ReservationForm(request.POST)
-    if not form.is_valid():
-      print form.errors
+    if form.is_valid():
+      reservation = form.save()
+      messages.success(request, "Du har nå reservert rom {} fra {} til {}".format(
+        reservation.room_id, reservation.start_time.strftime('%d %B %H:00'), reservation.end_time.strftime('%H:00')))
     else:
-      form.save()
+      for k, v in form.errors.items():
+        messages.warning(request, v)
   if request.GET.get('browseday', False):
     date = timezone.get_current_timezone().localize(datetime.strptime(request.GET.get('browseday'), '%d/%m/%Y'))
   else:
@@ -45,5 +52,5 @@ def index_view(request):
 
 
   return render(request, 'romres/index.html', {
-    'rooms': rooms, 'intervals': intervals, 'date': date
+    'rooms': rooms, 'intervals': intervals, 'date': date, 'form': form
   })

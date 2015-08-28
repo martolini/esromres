@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Q
 
 class ReservationManager(models.Manager):
   def today(self):
@@ -13,11 +15,11 @@ class Room(models.Model):
   id = models.SmallIntegerField(primary_key=True)
   size = models.SmallIntegerField(default=4)
 
-  def get_booked_intervals(self):
-    intervals = []
-    for reservation in self.reservations.today():
-      intervals.extend((range(int(timezone.localtime(reservation.start_time).hour), int(timezone.localtime(reservation.end_time).hour+.5))))
-    return intervals
+  def is_booked_for_interval(self, interval):
+    shortinterval = [interval[0] + timedelta(seconds=1), interval[1] - timedelta(seconds=1)]
+    return self.reservations.filter(
+      Q(start_time=interval[0]) | Q(end_time=interval[1]) | Q(start_time__range=shortinterval) | Q(end_time__range=shortinterval)
+    ).exists()
 
   def __unicode__(self):
     return '{}'.format(self.id)

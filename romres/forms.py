@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from django import forms
 from .models import Reservation
 import datetime
@@ -18,8 +20,19 @@ class ReservationForm(forms.ModelForm):
     valid = super(ReservationForm, self).is_valid()
     if not valid:
       return valid
-    if self.cleaned_data.get('start_time') < timezone.now() or self.cleaned_data.get('start_time') > self.cleaned_data.get('end_time'):
-      self.errors['time'] = 'asdasdadsasd'
+    start_time = self.cleaned_data.get('start_time')
+    end_time = self.cleaned_data.get('end_time')
+    if start_time == end_time:
+      self.errors['time'] = u'Du må booke rommet i minste en time.'
+      return False
+    if start_time < timezone.now():
+      self.errors['time'] = u'Du kan ikke reservere tilbake i tid...?'
+      return False
+    elif start_time > end_time:
+      self.errors['time'] = u'Du kan ikke slutte før du har startet. Komånn.'
+      return False
+    elif self.cleaned_data.get('room').is_booked_for_interval([start_time, end_time]):
+      self.errors['time'] = u'Rommet er allerede booket.'
       return False
     return True
 
